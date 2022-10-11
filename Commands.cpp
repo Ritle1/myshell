@@ -2,6 +2,8 @@
 #include <string>
 #include <windows.h>
 #include <filesystem>
+#include <fstream> // for cat
+#include <stdlib.h> // For clear or cls
 #include "Commands.h"
 #include "Directory.h"
 
@@ -18,8 +20,9 @@ string Commands::pwd(){
 }  
 
 // list files in the current directory i.e. dir.getDir().
-void Commands::ls(string flags){
+string Commands::ls(string flags){
 	// Determening flags
+	string ret = ""; // test output to return.
 	bool all = false;
 	bool as_list = false;
 	if (flags.size() > 0 && flags[0] == '-'){
@@ -37,7 +40,7 @@ void Commands::ls(string flags){
 		{
 			if (!as_list){
 				tmp_path = tmp_path.substr(tmp_path.find_last_of("\\/") + 1);
-				cout << tmp_path << ", ";
+				ret += tmp_path + ", ";
 				continue;
 			}
 			// else printing each file in it's own line with detailed information.
@@ -47,20 +50,133 @@ void Commands::ls(string flags){
 			line[2] = (attributes & FILE_WRITE_ACCESS || attributes & FILE_ALL_ACCESS) ? 'w' : '-';
 			line[3] = (attributes & FILE_EXECUTE) ? 'x' : '-';
 			line += tmp_path.substr(tmp_path.find_last_of("\\/") + 1);
-			cout << line << endl;
+			ret += line + "\n";
 		}
 	}
-	cout << ((as_list) ? "\n" : "\n\n");
+	ret += ((as_list) ? "\n" : "\n\n");
+	return ret;
+}  
+
+// Make a directory.
+void Commands::mkdir(string path){
+	bool result = false;
+	// Full path is specified (D:\some\path)
+	if (path.find(':') != string::npos) 
+		result = CreateDirectoryA(path.c_str(), NULL);
+	// use current working path instead. (some\path)
+	else{ 
+		result = CreateDirectoryA((dir.getDir() + '\\' + path).c_str(), NULL);
+	}
+	// checking for errors 
+	if (!result){
+		cout << "Could not create the directory.\n";
+		cout << "Error: " << GetLastError() << "\n\n";
+	}
 	return;
 }  
- 
-void Commands::mkdir(string path){return;}  // Make a directory.
-void Commands::rm(string path){return;} // Delete a directory or file.
-void Commands::mv(string sPath, string ePath){return;} // Rename or/and Repath.
-void Commands::cp(string sPath, string ePath){return;} // Create a duplicate of a file.
-void Commands::cat(string path){return;} // concatenate i.e show file contents on screen. (as text)
-void Commands::echo(string x){return;} // show x on screen. (as text)
-void Commands::touch(string path){return;} // create a file on a certain path.
+
+// Delete a directory or file.
+void Commands::rm(string path){
+	bool result = false;
+	// If full path is not specified, use the current working path.
+	if(path.find(':') == string::npos)
+		path = dir.getDir() + '\\' + path;
+	// Deleting a directory
+	if (GetFileAttributesA(path.c_str()) & FILE_ATTRIBUTE_DIRECTORY){
+		result = RemoveDirectoryA(path.c_str());
+	}
+	// Deleting a file
+	else {
+		result = DeleteFileA(path.c_str());
+	}
+	// checking for errors 
+	if (!result){
+		cout << "Could not delete specified path.\n";
+		cout << "Error: " << GetLastError() << "\n\n";
+	}
+	return;
+} 
+
+// Rename or/and Change path.
+void Commands::mv(string sPath, string ePath){
+	// If full path is not specified, use the current working path.
+	if(sPath.find(':') == string::npos)
+		sPath = dir.getDir() + '\\' + sPath;
+	if(ePath.find(':') == string::npos) // same for the end path.
+		ePath = dir.getDir() + '\\' + ePath;
+	// Preforming the move/ rename action and checking for errors if exist.
+	if(!MoveFileA(sPath.c_str(), ePath.c_str())){
+		cout << "Could not move/rename the specified path.\n";
+		cout << "Error: " << GetLastError() << "\n\n";
+	}
+	return;
+} 
+
+// Duplicate a file. (on a different path or name)
+void Commands::cp(string sPath, string ePath){
+	if(sPath.find(':') == string::npos)
+		sPath = dir.getDir() + '\\' + sPath;
+	if(ePath.find(':') == string::npos) // same for the end path.
+		ePath = dir.getDir() + '\\' + ePath;
+	// Preforming the copy action and checking for errors if exist.
+	// (Will not override existing files)
+	if(!CopyFileA(sPath.c_str(), ePath.c_str(), true)){
+		cout << "Could not move/rename the specified path.\n";
+		cout << "Error: " << GetLastError() << "\n\n";
+	}
+	return;
+	} 
+
+// concatenate i.e show file contents on screen. (as text)
+string Commands::cat(string path){
+
+	// If full path is not specified, use the current working path.
+	if(path.find(':') == string::npos)
+		path = dir.getDir() + '\\' + path;
+
+	fstream file;
+	file.open(path, ios::in);
+	if (!file) // Checking failbit flag state
+		return "Error opening the file.\n" + path;
+	string data = "";
+	char c;
+	while(true){
+		c = file.get();
+		data += c;
+		if (file.eof()) // Checking if EndOfFile bit is on.
+			break;
+	}
+	file.close(); // Done using the file
+	return data + "\r\n\r\n";
+} 
+
+// show x on screen. (as text)
+void Commands::echo(string x){
+	cout << x << "\n\n";
+	return;
+}
+
+// create a file on a certain path.
+void Commands::touch(string path){
+	// If full path is not specified, use the current working path.
+	if(path.find(':') == string::npos)
+		path = dir.getDir() + '\\' + path;
+
+	HANDLE h = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+	if(!h){
+		cout << "Could not create the specified path/file.\n";
+		cout << "Error: " << GetLastError() << "\n\n";
+		return;
+	}
+	CloseHandle(h);
+	return;
+}
+
+// Clear screen
+void Commands::clear(){
+	system("CLS");
+	cout << flush;
+}
 
 // Constructor
 Commands::Commands(){

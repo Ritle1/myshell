@@ -10,6 +10,8 @@ using namespace std;
 
 const int MAX_PATH_LONG = 65535;
 
+static bool allCharactersSame(string s);
+
 string Directory::getDir()
 {
 	return dir;
@@ -17,14 +19,16 @@ string Directory::getDir()
 
 void Directory::changeDir(string mod)
 {
-	if (mod == "~"){ resetDir(); }
+	// 1) stay on the same directory if it's all dots & length is not 2. (in that case go back a directory)
+	if(mod.find('.') != string::npos && mod.length() != 2 && allCharactersSame(mod)){}
+	// 2) same but for slashes - which have a use only when using one.
+	else if((mod.find('/') != string::npos || mod.find('\\') != string::npos) && mod.length() != 1 && allCharactersSame(mod)){}
+	else if (mod == "~"){ resetDir(); }
 	else if (mod == "..") // Go back one directory if possible.
 	{
 		string::size_type pos = dir.find_last_of("\\/");
 		dir = dir.substr(0, pos);
-		cout << dir << endl;
 	}
-	
 	else if (mod == "/") // Go back directorys to the root driver directory.
 	{
 		string::size_type pos = dir.find_first_of("\\/");
@@ -59,3 +63,14 @@ bool Directory::DirectoryExists(LPCSTR szPath)
   return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
          (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
+
+static bool allCharactersSame(string s)
+{
+    int n = s.length();
+    for (int i = 1; i < n; i++)
+        if (s[i] != s[0])
+            return false;
+ 
+    return true;
+}
+ 
