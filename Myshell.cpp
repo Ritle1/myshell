@@ -17,6 +17,7 @@ string lower(string x);
 string trim(const std::string &s);
 string rtrim(const std::string &s);
 string ltrim(const std::string &s);
+void fileOutput(string data, string command);
 vector<string> split(string x, char split_by);
 struct commandResult{
 	bool stateCode; // true if there is a return value, false if there isn't.
@@ -75,9 +76,11 @@ void pipeManager(string input)
 
 commandResult commandHandler(string command){
 	command = trim(command); // Removing spaces at the start & beggining.
-
+	string catCMD = command; // command + arguments concatenated for later.
 	vector<string> args = split(command, ' ');
 	commandResult res;
+	res.retValue = "";
+	res.stateCode = false;
 	command = lower(args.at(0));
 	if (command == "exit" || command == "quit")
 		exit(0); // Program exit at code 0, no error, no piping.
@@ -133,10 +136,23 @@ commandResult commandHandler(string command){
 		res.stateCode = false;
 	}
 	else if (command != ""){
-		cout << "Command: '" << command << "' is unkonwn.\n" << endl;
+		if (shell.process(args[0])){} // Do not print an error.
+		else cout << "Command: '" << command << "' is unkonwn.\n" << endl;
 		res.stateCode = false;
 	}
+	fileOutput(res.retValue, catCMD);
 	return res;
+}
+
+void fileOutput(string data, string command){
+	// Check if the command output to a file.
+	if (command.find('>') == string::npos)
+		return;
+	
+	vector<string> cmd = split(command, '>');
+	if (cmd.size() < 2) return;  // there is no file path parameter.
+	string path = trim(cmd[1]);
+	shell.write(data, path);
 }
 
 //----------------------------------------

@@ -130,6 +130,8 @@ void Commands::cp(string sPath, string ePath){
 // concatenate i.e show file contents on screen. (as text)
 string Commands::cat(string path){
 
+	if (path.find('>') != string::npos) return "";
+
 	// If full path is not specified, use the current working path.
 	if(path.find(':') == string::npos)
 		path = dir.getDir() + '\\' + path;
@@ -137,7 +139,7 @@ string Commands::cat(string path){
 	fstream file;
 	file.open(path, ios::in);
 	if (!file) // Checking failbit flag state
-		return "Error opening the file.\n" + path;
+		return "Error opening the file: " + path;
 	string data = "";
 	char c;
 	while(true){
@@ -147,7 +149,7 @@ string Commands::cat(string path){
 			break;
 	}
 	file.close(); // Done using the file
-	return data + "\r\n\r\n";
+	return (data);
 } 
 
 // show x on screen. (as text)
@@ -170,6 +172,41 @@ void Commands::touch(string path){
 	}
 	CloseHandle(h);
 	return;
+}
+
+// Launch another process. (returns if succeded or failed) 
+bool Commands::process(string path){
+	// If full path is not specified, use the current working path.
+	if(path.find(':') == string::npos)
+		path = dir.getDir() + '\\' + path;
+	STARTUPINFOA info={sizeof(info)};
+	PROCESS_INFORMATION processInfo;
+	// Note: Second parameter can be a command argument but is set to NULL.
+	if (CreateProcessA(path.c_str(), NULL, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo))
+	{
+		// Wait for the process to finish.
+    	WaitForSingleObject(processInfo.hProcess, INFINITE);  
+    	CloseHandle(processInfo.hProcess);  // Close the handles
+    	CloseHandle(processInfo.hThread);
+		return true;
+	}
+	return false;
+}
+
+void Commands::write(string data, string path){
+	// If full path is not specified, use the current working path.
+	if(path.find(':') == string::npos)
+		path = dir.getDir() + '\\' + path;	
+
+	fstream file;
+	file.open(path, ios::out);
+	if(!file){  // Couldn't open the file.
+		file.close();
+		cout << "Couldn't write to file.\n\n";
+		return;
+	}
+	file.write(data.c_str(), data.size());
+	file.close(); // finished using the file.
 }
 
 // Clear screen

@@ -19,6 +19,8 @@ class Commands
 		void echo(string x); // show x on screen. (as text)
 		void touch(string path); // create a file on a certain path.
 		void clear(); // Clear screen of any characters.
+		bool process(string path); // Create a subprocess.
+		void write(string data, string path); // Write data into a file.
 		
 		// Constructor
 		Commands();
