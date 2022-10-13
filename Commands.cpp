@@ -193,6 +193,7 @@ bool Commands::process(string path){
 	return false;
 }
 
+// Write certain string data to file.
 void Commands::write(string data, string path){
 	// If full path is not specified, use the current working path.
 	if(path.find(':') == string::npos)
@@ -207,6 +208,26 @@ void Commands::write(string data, string path){
 	}
 	file.write(data.c_str(), data.size());
 	file.close(); // finished using the file.
+}
+
+void Commands::help(){
+	string to_print = "\nList of commands:\n\n"
+	"  cd {path} -> Change directory path.\n"
+	"  pwd -> Print current working directory.\n"
+	"  ls {flags} -> List files and directories (flags: -la).\n"
+	"  mkdir {path} -> Create a directory in specified path.\n"
+	"  rm {path} -> Remove a file in specified path.\n"
+	"  mv {current_file} {change_to} -> Rename / Change path of a file.\n"
+	"  cp {current_file} {change_to} -> Duplicate file to another path / name.\n"
+	"  cat {path} -> Print file contents as string.\n"
+	"  echo {data} -> Print data.\n"
+	"  touch {path} -> Create a file.\n"
+	"  clear / cls -> Clear console.\n"
+	"  help -> Show this menu.\n\n"
+	"In addition, pipes and output to files are supported (| or >)\n"
+	"as well as launching processes. (No PATH varaible support yet.)\n\n";
+	cout << to_print;
+	return;
 }
 
 // Clear screen

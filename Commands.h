@@ -21,6 +21,7 @@ class Commands
 		void clear(); // Clear screen of any characters.
 		bool process(string path); // Create a subprocess.
 		void write(string data, string path); // Write data into a file.
+		void help(); // returns a list of all commands + usage.
 		
 		// Constructor
 		Commands();

@@ -135,6 +135,7 @@ commandResult commandHandler(string command){
 		shell.clear();
 		res.stateCode = false;
 	}
+	else if (command == "help") shell.help();
 	else if (command != ""){
 		if (shell.process(args[0])){} // Do not print an error.
 		else cout << "Command: '" << command << "' is unkonwn.\n" << endl;
